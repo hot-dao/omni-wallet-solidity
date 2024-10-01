@@ -1,0 +1,6 @@
+brownie-config.yaml
+.env
+artifacts
+build
+venv
+.idea
