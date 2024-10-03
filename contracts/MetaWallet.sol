@@ -14,16 +14,10 @@ import "OpenZeppelin/openzeppelin-contracts@4.7.3/contracts/token/ERC20/IERC20.s
 import "OpenZeppelin/openzeppelin-contracts@4.7.3/contracts/utils/cryptography/ECDSA.sol";
 import "./RlpEncode.sol";
 
-interface IWETH is IERC20 {
-    function deposit() external payable;
-
-    function withdraw(uint256 amount) external;
-}
-
 contract MetaWallet {
     using SafeERC20 for IERC20;
 
-    uint64 public constant MAX_UINT64 = 2**64 - 1;
+    uint64 public constant MAX_UINT64 = 2 ** 64 - 1;
     uint128 public constant NONCE_TS_SHIFT = 1000000000000;
 
     uint128 public constant WITHDRAW_DELAY_SECONDS = 500;
@@ -58,8 +52,8 @@ contract MetaWallet {
      * @param amount The amount of tokens to withdraw.
      */
     function withdrawToken(address tokenAddress, uint256 amount)
-        public
-        onlyOwner
+    public
+    onlyOwner
     {
         IERC20(tokenAddress).safeTransfer(owner, amount);
     }
@@ -70,7 +64,7 @@ contract MetaWallet {
      * @param amount The amount of Ether to withdraw (in wei).
      */
     function withdrawEth(uint256 amount) public onlyOwner {
-        (bool success, ) = payable(owner).call{value: amount}("");
+        (bool success,) = payable(owner).call{value: amount}("");
         require(success, "Transfer failed.");
     }
 
@@ -79,7 +73,7 @@ contract MetaWallet {
      * @dev Only callable by the owner. Resets the fees to zero after withdrawal.
      */
     function withdrawFees() public onlyOwner {
-        (bool success, ) = payable(owner).call{value: fees}("");
+        (bool success,) = payable(owner).call{value: fees}("");
         require(success, "Transfer failed.");
         fees = 0;
     }
@@ -149,7 +143,7 @@ contract MetaWallet {
         address receiver_id,
         uint128 amount,
         bytes memory signature
-    ) public payable  {
+    ) public payable {
         uint128 nonce_ts = nonce / NONCE_TS_SHIFT;
         require(nonce_ts > minTimestamp, "Nonce timestamp too low");
         require(nonce_ts < maxTimestamp, "Nonce timestamp too high");
@@ -171,7 +165,7 @@ contract MetaWallet {
         );
         usedNonces[nonce] = true;
         if (contract_id == NATIVE_TOKEN) {
-            (bool success, ) = payable(receiver_id).call{value: amount}("");
+            (bool success,) = payable(receiver_id).call{value: amount}("");
             require(success, "Transfer failed.");
         } else {
             IERC20(contract_id).safeTransfer(receiver_id, amount);
@@ -327,9 +321,9 @@ contract MetaWallet {
      * @return The SHA-256 hash of the refund message data.
      */
     function getRefundMessageHash(uint128 nonce)
-        public
-        view
-        returns (bytes32)
+    public
+    view
+    returns (bytes32)
     {
         return sha256(getRefundMessageRaw(nonce));
     }
@@ -340,9 +334,9 @@ contract MetaWallet {
      * @return The RLP-encoded raw refund message data.
      */
     function getRefundMessageRaw(uint128 nonce)
-        internal
-        view
-        returns (bytes memory)
+    internal
+    view
+    returns (bytes memory)
     {
         bytes[] memory rlpList = new bytes[](2);
         rlpList[0] = RLPEncode.encodeUint(nonce, 16);
