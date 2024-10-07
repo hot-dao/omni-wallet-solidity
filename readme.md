@@ -65,3 +65,12 @@ The contract initializes with the owner being the deployer and sets the `minTime
 ## Additional Information
 
 - **Audit Report**: This contract was audited by Hacken. The full audit report can be found [here](https://example.com/audit-report).
+
+
+## Run test
+    
+    ```bash
+    pip install -r requirements.txt
+    brownie compile
+    brownie test
+    ```
