@@ -66,6 +66,10 @@ The contract initializes with the owner being the deployer and sets the `minTime
 
 - **Audit Report**: This contract was audited by Hacken. The full audit report can be found [here](https://example.com/audit-report).
 
+## Deployed Contracts
+
+- **BSC**: [0x42351e68420D16613BBE5A7d8cB337A9969980b4](https://bscscan.com/address/0x42351e68420D16613BBE5A7d8cB337A9969980b4)
+
 
 ## Run test
     
