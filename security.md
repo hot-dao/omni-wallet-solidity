@@ -21,7 +21,6 @@ We follow a responsible disclosure process:
 2. We confirm the vulnerability and work on a fix.
 3. A fix is deployed, and only then is the vulnerability publicly disclosed.
 
-For more details, you can review our full [Security Policy](https://yourdomain.com/security-policy).
 
 ## Acknowledgements
 
