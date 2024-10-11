@@ -35,3 +35,8 @@ We accept vulnerability reports in the following languages:
 ## Expiration
 
 This security policy is valid until **December 31, 2025**.
+
+
+## Deployed Contracts
+
+- **BSC**: [0x42351e68420D16613BBE5A7d8cB337A9969980b4](https://bscscan.com/address/0x42351e68420D16613BBE5A7d8cB337A9969980b4)
