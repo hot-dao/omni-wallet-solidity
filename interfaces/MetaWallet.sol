@@ -22,10 +22,6 @@ interface IMetaWallet {
 
     function nonceMax() external view returns (uint128);
 
-    function minTimestamp() external view returns (uint256);
-
-    function maxTimestamp() external view returns (uint256);
-
     function fees() external view returns (uint256);
 
     function deposits(uint128) external view returns (bytes32);

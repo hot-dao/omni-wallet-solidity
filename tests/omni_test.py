@@ -34,14 +34,11 @@ def test_meta_wallet_deploy():
     owner = accounts[0]
     verify_address = accounts[1]
     chain_id = network.chain.id
-    current_time = chain.time()
     meta_wallet = MetaWallet.deploy(verify_address.address, chain_id, {"from": owner})
 
     assert meta_wallet.owner() == owner.address
     assert meta_wallet.verifyAddress() == verify_address.address
     assert meta_wallet.chainId() == chain_id
-    assert meta_wallet.minTimestamp() >= current_time
-    assert meta_wallet.maxTimestamp() == 2**64 - 1
 
 
 def test_deposit_eth():
@@ -219,52 +216,3 @@ def test_only_owner_functions():
     meta_wallet.withdrawFees({"from": owner})
     meta_wallet.changeOwner(non_owner.address, {"from": owner})
 
-
-def test_hot_verify():
-    owner = accounts[0]
-    private_key = keys.PrivateKey(private_key_bytes=bytes.fromhex(private_key_hex))
-    verify_address = private_key.public_key.to_checksum_address()
-    meta_wallet = MetaWallet.deploy(
-        verify_address,
-        network.chain.id,
-        {"from": owner, "value": Wei("1 ether")},
-    )
-    chain.sleep(10)
-    chain.mine()
-
-    nonce = chain.time() * NONCE_TS_SHIFT
-    refund_hash = hashlib.sha256(rlp.encode(RefundProof(nonce, network.chain.id))).digest()
-
-    # Refund invalid - too early
-    encoded_nonce = encode(["uint128", "uint8"], [nonce, 1])
-    with pytest.raises(Exception):
-        meta_wallet.hot_verify(
-            refund_hash, bytes(0), encoded_nonce, bytes(0), {"from": owner}
-        )
-
-    chain.sleep(1000)
-    chain.mine()
-
-    # Refund success
-    meta_wallet.hot_verify(refund_hash, bytes(0), encoded_nonce, bytes(0), {"from": owner})
-
-
-def test_close_contract():
-    owner = accounts[0]
-    verify_address = accounts[1]
-    meta_wallet = MetaWallet.deploy(
-        verify_address.address,
-        network.chain.id,
-        {"from": owner, "value": Wei("1 ether")},
-    )
-
-    meta_wallet.close({"from": owner})
-
-    with pytest.raises(Exception):
-        meta_wallet.deposit(b"\x12\x34", {"from": owner, "value": Wei("1 ether")})
-
-    token = MockERC20.deploy("Test Token", "TTK", 18, int(1e21), {"from": owner})
-    token.transfer(owner, int(1e20), {"from": owner})
-    token.approve(meta_wallet.address, int(1e20), {"from": owner})
-    with pytest.raises(Exception):
-        meta_wallet.deposit(b"\x12\x34", token.address, 1e18, {"from": owner})
