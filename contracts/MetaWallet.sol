@@ -20,9 +20,6 @@ contract MetaWallet {
     uint64 public constant MAX_UINT64 = 2 ** 64 - 1;
     uint128 public constant NONCE_TS_SHIFT = 1000000000000;
 
-    uint128 public constant WITHDRAW_DELAY_SECONDS = 500;
-    uint128 public constant REFUND_DELAY_SECONDS = 600;
-
     address constant NATIVE_TOKEN = address(0);
 
     address public owner;
@@ -30,8 +27,6 @@ contract MetaWallet {
     uint64 public chainId;
     uint128 public nonceMax;
 
-    uint256 public minTimestamp;
-    uint256 public maxTimestamp;
     uint256 public fees;
 
     mapping(uint128 => bytes32) public deposits;
@@ -87,13 +82,6 @@ contract MetaWallet {
         owner = newOwner;
     }
 
-    /**
-     * @notice Close the contract by setting the maximum timestamp to the current time.
-     * @dev Only callable by the owner. Prevents new deposits after closure.
-     */
-    function close() public onlyOwner {
-        maxTimestamp = block.timestamp;
-    }
 
     /**
      * @notice Fallback function to receive Ether.
@@ -112,8 +100,6 @@ contract MetaWallet {
         owner = msg.sender;
         verifyAddress = _verifyAddress;
         chainId = _chainId;
-        minTimestamp = block.timestamp;
-        maxTimestamp = MAX_UINT64;
         fees = 0;
     }
 
@@ -145,12 +131,6 @@ contract MetaWallet {
         bytes memory signature
     ) public payable {
         uint128 nonce_ts = nonce / NONCE_TS_SHIFT;
-        require(nonce_ts > minTimestamp, "Nonce timestamp too low");
-        require(nonce_ts < maxTimestamp, "Nonce timestamp too high");
-        require(
-            nonce_ts > uint128(block.timestamp) - WITHDRAW_DELAY_SECONDS,
-            "Nonce time is expired, you can make a refund"
-        ); // this transfer can only be refunded
 
         require(!usedNonces[nonce], "Nonce already used");
         require(
@@ -187,8 +167,6 @@ contract MetaWallet {
         address contract_id,
         uint128 amount
     ) public payable {
-        require(block.timestamp < maxTimestamp, "Contract is closed");
-
         IERC20(contract_id).safeTransferFrom(
             msg.sender,
             address(this),
@@ -216,7 +194,6 @@ contract MetaWallet {
      * @dev Records the deposit of Ether and emits a NewTransfer event.
      */
     function deposit(bytes memory receiver) public payable {
-        require(block.timestamp < maxTimestamp, "Contract is closed");
         uint128 nonce = uint128(block.timestamp) * NONCE_TS_SHIFT + nonceMax;
 
         bytes32 origMessageHash = getMessageHash(
@@ -245,29 +222,12 @@ contract MetaWallet {
         bytes memory userPayload,
         bytes memory _metadata
     ) public view returns (bool) {
-        (uint128 nonce, uint8 type_) = abi.decode(
+        (uint128 nonce) = abi.decode(
             userPayload,
-            (uint128, uint8)
+            (uint128)
         );
 
-        if (type_ == 0) {
-            // Verify deposit: valid and exists
-            require(deposits[nonce] == msg_hash, "Deposit hash mismatch");
-        } else {
-            // Verify refund: nonce is old to deposit, not expired for refund, was not used and hash is valid
-            require(!usedNonces[nonce], "Nonce already used");
-
-            uint128 nonce_ts = nonce / NONCE_TS_SHIFT;
-            require(nonce_ts > minTimestamp, "Nonce time is too low");
-            require(nonce_ts < maxTimestamp, "Nonce time is too high");
-            require(
-                nonce_ts < uint128(block.timestamp) - REFUND_DELAY_SECONDS,
-                "Nonce time is not expired"
-            ); // this transfer can be refunded
-
-            bytes32 origMessageHash = getRefundMessageHash(nonce);
-            require(origMessageHash == msg_hash, "Refund hash mismatch");
-        }
+        require(deposits[nonce] == msg_hash, "Deposit hash mismatch");
         return true;
     }
 
